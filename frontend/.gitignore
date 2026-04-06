@@ -34,5 +34,3 @@ backend/__pycache__
 # Env files
 .env
 
-backend/.env
-backend/app/__pycache__/

@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from app.services.langgraph_flow import graph_app
 
 app = FastAPI()
 
@@ -17,6 +18,9 @@ notes = []
 class NoteCreate(BaseModel):
     title: str
     content: str
+class AskRequest(BaseModel):
+    note_id: int
+    question: str
 
 @app.get("/health")
 def health():
@@ -36,3 +40,18 @@ def create_note(note: NoteCreate):
     }
     notes.append(new_note)
     return new_note
+
+@app.post("/ask")
+def ask_question(payload: AskRequest):
+    selected_note = next((note for note in notes if note["id"] == payload.note_id), None)
+
+    if not selected_note:
+        return {"answer": "Note not found"}
+
+    result = graph_app.invoke({
+        "note_content": selected_note["content"],
+        "question": payload.question,
+        "answer": ""
+    })
+
+    return {"answer": result["answer"]}
